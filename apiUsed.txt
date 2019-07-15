@@ -1,0 +1,2 @@
+https://home.openweathermap.org/api_keys
+https://discordapp.com/developers/applications/599357055014535173/bots
