@@ -15,10 +15,12 @@ bot.on('ready', () => {
 
 bot.on('message', msg => {
   let args = msg.content.substring(PREFIX.length).split(" ");
+  args = args.map(item => item.toLowerCase());
+  let directories = getDirectories();
 
   switch(args[0]){
     case 'help':
-      msg.channel.send('These are all my commands: weather, outfit, help, clear, add, addFolder, get{folders, images: folder: imageName}');
+      msg.channel.send('These are all my commands: weather, outfit, help, clear, add, addfolder, get{folders, images: folder: imageName}, delete{image:folder:imageName}');
     break
 
     case 'weather':
@@ -39,31 +41,49 @@ bot.on('message', msg => {
       addImage(msg,args[1]);
     break;
 
-    case 'addFolder':
-      makeDirectory(args[1]);
+    case 'addfolder':
+      makeDirectory(args[1],msg);
     break;
 
     case 'get':
-      let directories = getDirectories();
-
       if (args[1] == 'folders'){
         msg.channel.send('Here are all the directories: ' + directories.join(', '));
       }
       else if( args[1] == 'images'){
-        if(directories.includes(args[2])){
-          let folderName = `./images/${args[2]}`;
-          let response = getImages(folderName);
-          if(response.includes(args[3])){
-            msg.channel.send({files: [`${folderName}/${args[3]}`]});
-          }
-          else{
-          msg.channel.send('Here are all the images in ' + args[2] + ': ' +response.join(', '));
+        if(directoryHelper(directories,args,msg)){
+          msg.channel.send({files: [`./images/${args[2]}/${args[3]}`]});
         }
+      }
+    break;
+
+    case 'delete':
+      if(args[1] == 'image'){
+        if(directoryHelper(directories,args,msg)){
+          deleteImage(`./images/${args[2]}/${args[3]}`);
         }
       }
     break;
   }
 });
+
+function directoryHelper(directories,args,msg){
+  if(directories.includes(args[2])){
+    let response = getImages(`./images/${args[2]}`);
+    if(response.includes(args[3])){
+      return true;
+    }
+    else if(args[3] != null){
+      msg.channel.send('Sorry, this image does not exist');
+    }
+    else{
+      msg.channel.send('Here are all the images in ' + args[2] + ': ' +response.join(', '));
+  }
+  }
+}
+
+function deleteImage(object){
+  fs.unlinkSync(object);
+}
 
 function getImages(folder){
   let imageArray = [];
@@ -73,11 +93,17 @@ function getImages(folder){
   return imageArray;
 }
 
-function makeDirectory(name){
-  var dir = `./images/${name}`;
+function makeDirectory(name,msg){
+  let valid = new RegExp(/^[a-zA-Z].*/).test(name);
+  if(!valid){
+    msg.channel.send('Sorry, this is not a valid folder name');
+  }
+  else{
+    let dir = `./images/${name}`;
 
-  if (!fs.existsSync(dir)){
-      fs.mkdirSync(dir);
+    if (!fs.existsSync(dir)){
+        fs.mkdirSync(dir);
+    }
   }
 }
 
@@ -124,19 +150,19 @@ function getDirectories() {
 
 function getOutfit(msg,temp){
   if(temp > 20){
-    let files = fs.readdirSync('./images/Hot/');
+    let files = fs.readdirSync('./images/hot/');
     let random = Math.floor(Math.random() * files.length);
-    msg.channel.send({files: [`./images/Hot/${files[random]}`]})
+    msg.channel.send({files: [`./images/hot/${files[random]}`]})
   }
   else if ( temp > 5) {
-    let files = fs.readdirSync('./images/Temperate/');
+    let files = fs.readdirSync('./images/temperate/');
     let random = Math.floor(Math.random() * files.length);
-    msg.channel.send({files: [`./images/Temperate/${files[random]}`]})
+    msg.channel.send({files: [`./images/temperate/${files[random]}`]})
   }
   else {
-    let files = fs.readdirSync('./images/Cold/');
+    let files = fs.readdirSync('./images/cold/');
     let random = Math.floor(Math.random() * files.length);
-    msg.channel.send({files: [`./images/Cold/${files[random]}`]})
+    msg.channel.send({files: [`./images/cold/${files[random]}`]})
   }
 }
 
