@@ -3,20 +3,24 @@ const https = require('https');
 const axios = require('axios');
 const fs = require('fs');
 
+//main hub for connecting to Discord API
 const bot = new Discord.Client();
 
 const key = 'NTk5MzU3MDU1MDE0NTM1MTcz.XSkA2g.dC87VXoRDeg7YAjhgexHBB5zMDI';
 
+//Essential prefix for commanding the bot
 const PREFIX = '!';
+
+const directories = getDirectories();
 
 bot.on('ready', () => {
   console.log('This bot is online');
 });
 
 bot.on('message', msg => {
+  //split input into individual words and making them lower case
   let args = msg.content.substring(PREFIX.length).split(" ");
   args = args.map(item => item.toLowerCase());
-  let directories = getDirectories();
 
   switch(args[0]){
     case 'help':
@@ -66,6 +70,7 @@ bot.on('message', msg => {
   }
 });
 
+// function to determine if the image in the directory exists
 function directoryHelper(directories,args,msg){
   if(directories.includes(args[2])){
     let response = getImages(`./images/${args[2]}`);
@@ -94,6 +99,7 @@ function getImages(folder){
 }
 
 function makeDirectory(name,msg){
+  //regex to validate if the naming schema is valid
   let valid = new RegExp(/^[a-zA-Z].*/).test(name);
   if(!valid){
     msg.channel.send('Sorry, this is not a valid folder name');
@@ -110,7 +116,7 @@ function makeDirectory(name,msg){
 function getWeather(msg,command){
   let temp = 0;
   let response = '';
-  axios.get('https://api.openweathermap.org/data/2.5/weather?q=Waterloo,ca&appid=e04a364b8ddd6b7a71a355f64abf3f56')
+  axios.get('https://api.openweathermap.org/data/2.5/weather?q=waterloo,ca&appid=e04a364b8ddd6b7a71a355f64abf3f56')
     .then(response => {
 
       temp = (parseInt(response.data.main.temp) - 273.15).toFixed(2);
@@ -128,10 +134,10 @@ function getWeather(msg,command){
 }
 
 function addImage(msg,folder){
-  let directories = getDirectories();
+  //let directories = getDirectories();
   if (directories.includes(folder)){
     msg.attachments.forEach(a => {
-      const file = fs.createWriteStream(`./images/${folder}/${a.filename}`);
+      const file = fs.createWriteStream(`./images/${folder}/${a.filename.toLowerCase()}`);
       const request = https.get(a.url, response => {
         response.pipe(file);
       });
